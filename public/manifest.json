@@ -1,0 +1,25 @@
+{
+  "name": "365 Motivos para Te Amar",
+  "short_name": "365 Motivos",
+  "description": "Um ano inteiro de mensagens de carinho e amor-próprio para cultivar diariamente.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0b0205",
+  "theme_color": "#0b0205",
+  "orientation": "portrait",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
