@@ -26,6 +26,21 @@ body {
   color: var(--text-white);
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  /* Disable mobile tap highlights and restrict selections */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input, textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button, a {
+  -webkit-tap-highlight-color: transparent;
+  outline: none;
 }
 
 /* Premium Typography Helper Classes */
@@ -160,3 +175,20 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(226, 168, 154, 0.45);
 }
+
+/* PWA Banner Animation */
+@keyframes slide-up-fade {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up-fade {
+  animation: slide-up-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+

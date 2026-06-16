@@ -70,6 +70,11 @@ export default function Home() {
   const [showWatermark, setShowWatermark] = useState(true);
   const [textColorMode, setTextColorMode] = useState<"white" | "gold" | "rose">("white");
 
+  // PWA Install Prompt States
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showAndroidInstallBtn, setShowAndroidInstallBtn] = useState(false);
+  const [showIosInstallPrompt, setShowIosInstallPrompt] = useState(false);
+
   // Helper variables for checking Web Share availability in window context safely
   const isWebShareSupported = typeof navigator !== "undefined" && !!navigator.share && !!navigator.canShare;
 
@@ -130,6 +135,38 @@ export default function Home() {
         localStorage.removeItem("motivos_reminder_enabled");
       }
     }
+
+    // 4. PWA Installation Prompts
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      const isDismissed = localStorage.getItem("pwa_install_dismissed");
+      if (!isDismissed) {
+        setShowAndroidInstallBtn(true);
+      }
+    };
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+
+    const isIosDevice = () => {
+      if (typeof window === "undefined" || !navigator) return false;
+      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+      return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+    };
+
+    const isStandalone = () => {
+      if (typeof window === "undefined") return false;
+      return (window.navigator as any).standalone === true || window.matchMedia("(display-mode: standalone)").matches;
+    };
+
+    const isDismissedIos = localStorage.getItem("pwa_ios_install_dismissed");
+    if (isIosDevice() && !isStandalone() && !isDismissedIos) {
+      setShowIosInstallPrompt(true);
+    }
+
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    };
   }, []);
 
   // Calculate active day based on date configurations
@@ -320,6 +357,25 @@ export default function Home() {
         icon: "/icon-192.png"
       });
     }
+  };
+
+  const handleAndroidInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`User response to the install prompt: ${outcome}`);
+    setDeferredPrompt(null);
+    setShowAndroidInstallBtn(false);
+  };
+
+  const dismissAndroidInstall = () => {
+    setShowAndroidInstallBtn(false);
+    localStorage.setItem("pwa_install_dismissed", "true");
+  };
+
+  const dismissIosInstall = () => {
+    setShowIosInstallPrompt(false);
+    localStorage.setItem("pwa_ios_install_dismissed", "true");
   };
 
   const shareNativeImage = async () => {
@@ -710,7 +766,7 @@ export default function Home() {
                 }}
                 placeholder="Ex: USU00000#LOVE"
                 className={cn(
-                  "w-full bg-white/5 border rounded-xl px-4 py-3.5 text-sm text-center font-bold tracking-widest text-white placeholder-white/20 focus:outline-none focus:border-rose-gold transition-all duration-300",
+                  "w-full bg-white/5 border rounded-xl px-4 py-3.5 text-base text-center font-bold tracking-widest text-white placeholder-white/20 focus:outline-none focus:border-rose-gold transition-all duration-300",
                   showGateError ? "border-red-500/50 focus:border-red-500 animate-shake" : "border-white/10"
                 )}
               />
@@ -759,8 +815,14 @@ export default function Home() {
         />
       </div>
 
-      {/* Content wrapper - optimized responsiveness */}
-      <div className="relative z-10 min-h-screen flex flex-col justify-between items-center p-3 xs:p-4 sm:p-8 md:p-12 font-sans-elegant">
+      {/* Content wrapper - optimized responsiveness with Safe Area insets support */}
+      <div 
+        className="relative z-10 min-h-screen flex flex-col justify-between items-center p-3 xs:p-4 sm:p-8 md:p-12 font-sans-elegant"
+        style={{
+          paddingTop: "calc(env(safe-area-inset-top) + 0.75rem)",
+          paddingBottom: "calc(env(safe-area-inset-bottom) + 0.75rem)"
+        }}
+      >
         
         {/* 1. Header Bar */}
         <header className="w-full max-w-4xl flex flex-col md:flex-row items-center justify-between gap-5 mb-6 md:mb-8 mt-2">
@@ -1050,7 +1112,7 @@ export default function Home() {
                     value={dayInput}
                     onChange={(e) => setDayInput(e.target.value)}
                     placeholder={`Ex: 1 a ${motivosCategoria.length}`}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors"
                   />
                   <button type="submit" className="absolute right-2 p-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors">
                     <ArrowRight className="w-3.5 h-3.5 text-white/80" />
@@ -1068,11 +1130,11 @@ export default function Home() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Digite palavras chave..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-4 py-2.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors"
                   />
                   {searchQuery && (
                     <button onClick={() => setSearchQuery("")} className="absolute right-3 p-1 rounded-full hover:bg-white/10 transition-colors">
-                      <X className="w-3 h-3 text-white/60" />
+                      <X className="w-3.5 h-3.5 text-white/60" />
                     </button>
                   )}
                 </div>
@@ -1120,7 +1182,7 @@ export default function Home() {
                       setSpecialStartDate(dateVal);
                       localStorage.setItem("motivos_special_start_date", dateVal);
                     }}
-                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors mt-1"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2.5 text-base text-white placeholder-white/30 focus:outline-none focus:border-rose-gold transition-colors mt-1"
                   />
                 )}
               </div>
@@ -1389,6 +1451,61 @@ export default function Home() {
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* PWA Floating Installation Prompts */}
+      {showAndroidInstallBtn && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 animate-slide-up-fade">
+          <div className="glass-premium rounded-2xl p-4 border border-[#e2a89a]/35 shadow-2xl relative">
+            <button 
+              onClick={dismissAndroidInstall}
+              className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex items-start gap-3 mt-1">
+              <div className="w-10 h-10 rounded-xl bg-[#e2a89a]/10 border border-[#e2a89a]/30 flex items-center justify-center shrink-0">
+                <Heart className="w-5 h-5 text-rose-gold-metallic animate-premium-pulse" />
+              </div>
+              <div className="text-left flex-grow">
+                <h4 className="text-xs font-bold text-white tracking-wide">Adicionar à Tela de Início</h4>
+                <p className="text-[10px] text-white/70 leading-relaxed mt-1 mb-2.5">
+                  Instale o aplicativo para ter acesso rápido aos seus motivos diários offline!
+                </p>
+                <button
+                  onClick={handleAndroidInstallClick}
+                  className="w-full py-2 rounded-lg bg-gradient-to-r from-[#e2a89a] to-[#f43f5e] hover:brightness-105 active:scale-95 text-rose-950 font-bold text-[10px] tracking-widest uppercase transition-all shadow-md"
+                >
+                  Instalar Aplicativo
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showIosInstallPrompt && (
+        <div className="fixed bottom-4 left-4 right-4 md:left-auto md:right-4 md:max-w-sm z-50 animate-slide-up-fade">
+          <div className="glass-premium rounded-2xl p-4 border border-[#e2a89a]/35 shadow-2xl relative">
+            <button 
+              onClick={dismissIosInstall}
+              className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-colors"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+            <div className="flex items-start gap-3 mt-1">
+              <div className="w-10 h-10 rounded-xl bg-[#e2a89a]/10 border border-[#e2a89a]/30 flex items-center justify-center shrink-0">
+                <Heart className="w-5 h-5 text-rose-gold-metallic animate-premium-pulse" />
+              </div>
+              <div className="text-left">
+                <h4 className="text-xs font-bold text-white tracking-wide">Instalar no seu iPhone</h4>
+                <p className="text-[10px] text-white/70 leading-relaxed mt-1">
+                  Toque no ícone de <strong className="text-[#e2a89a]">Compartilhar</strong> 📤 (quadrado com seta para cima na barra de navegação) e selecione <strong className="text-[#e2a89a]">"Adicionar à Tela de Início"</strong> ❤️
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       )}
