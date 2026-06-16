@@ -124,6 +124,16 @@ body {
   animation: soft-pulse 4s infinite ease-in-out;
 }
 
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.2s ease-in-out 0s 2;
+}
+
 .glow-circle {
   border-radius: 50%;
   filter: blur(140px);
