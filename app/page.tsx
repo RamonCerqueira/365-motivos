@@ -307,7 +307,7 @@ export default function Home() {
 
   const handleUnlockGate = (e: React.FormEvent) => {
     e.preventDefault();
-    if (accessCodeInput.trim().toUpperCase() === "USU01210#LOVE") {
+    if (accessCodeInput.trim() === "hjeuteamoaindamais") {
       setIsUnlocked(true);
       localStorage.setItem("motivos_unlocked", "true");
     } else {
