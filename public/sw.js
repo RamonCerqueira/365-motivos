@@ -1,4 +1,4 @@
-const CACHE_NAME = '365-motivos-cache-v1';
+const CACHE_NAME = '365-motivos-cache-v2';
 const ASSETS_TO_CACHE = [
   '/',
   '/manifest.json',
@@ -36,6 +36,22 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   // Only handle GET requests and ignore chrome-extension / browser-specific schemes
   if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  const requestUrl = new URL(event.request.url);
+
+  // Let Next.js serve the exact build-specific chunks referenced by the current page.
+  // Caching these can combine HTML from one deployment with JavaScript from another.
+  if (requestUrl.pathname.startsWith('/_next/')) {
+    return;
+  }
+
+  // Always request the latest page while online; use the precached shell only offline.
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match('/'))
+    );
     return;
   }
 
